@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brew Decisions — Coffee Shop Simulator</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Caveat:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --espresso: #2C1810;
+      --roast: #5C3317;
+      --caramel: #C8843F;
+      --latte: #D4A96A;
+      --cream: #F5EDD8;
+      --foam: #FAF6EE;
+      --mint: #4A9B7F;
+      --red: #C0392B;
+      --gold: #E8B84B;
+      --ink: #1A0F0A;
+      --panel-shadow: 0 4px 24px rgba(44, 24, 16, 0.18);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--espresso);
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(92, 51, 23, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(200, 132, 63, 0.15) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 980px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+      animation: fadeIn 0.45s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--caramel);
+      color: var(--foam);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 36px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      letter-spacing: 0.4px;
+    }
+
+    .btn-primary {
+      background: var(--caramel);
+      color: var(--foam);
+      box-shadow: 0 4px 20px rgba(200, 132, 63, 0.38);
+    }
+
+    .btn-primary:hover {
+      background: var(--latte);
+      transform: translateY(-2px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 2px solid var(--latte);
+      color: var(--latte);
+    }
+
+    .btn-ghost:hover {
+      background: var(--latte);
+      color: var(--espresso);
+    }
+
+    #title-screen {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .game-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(52px, 8vw, 96px);
+      font-weight: 900;
+      color: var(--cream);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .game-sub {
+      font-family: 'Caveat', cursive;
+      font-size: 28px;
+      color: var(--latte);
+      margin-bottom: 40px;
+    }
+
+    .title-art {
+      font-size: 80px;
+      display: block;
+      margin-bottom: 28px;
+      animation: bob 3s ease-in-out infinite;
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+
+      50% {
+        transform: translateY(-8px) rotate(2deg);
+      }
+    }
+
+    .title-desc {
+      max-width: 540px;
+      margin: 0 auto 44px;
+      color: rgba(245, 237, 216, 0.72);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .title-btns {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    #diff-screen {
+      padding: 20px 0;
+    }
+
+    .diff-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .diff-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 38px;
+      font-weight: 900;
+      color: var(--cream);
+      margin-bottom: 8px;
+    }
+
+    .diff-subtitle {
+      color: rgba(245, 237, 216, 0.65);
+      font-size: 15px;
+    }
+
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .diff-card {
+      background: var(--foam);
+      border-radius: 16px;
+      border: 3px solid var(--espresso);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.22s;
+      position: relative;
+    }
+
+    .diff-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+    }
+
+    .diff-card.selected {
+      border-color: var(--caramel);
+      box-shadow: 0 0 0 4px rgba(200, 132, 63, 0.35);
+    }
+
+    .diff-card-top {
+      padding: 22px 20px 16px;
+      text-align: center;
+    }
+
+    .diff-emoji {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .diff-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--espresso);
+      margin-bottom: 6px;
+    }
+
+    .diff-tagline {
+      font-size: 12px;
+      color: #777;
+      font-style: italic;
+    }
+
+    .diff-card-stats {
+      background: var(--cream);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      border-top: 2px solid rgba(92, 51, 23, 0.12);
+    }
+
+    .diff-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .diff-stat-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .diff-stat-val {
+      font-weight: 700;
+      color: var(--roast);
+    }
+
+    .diff-card-footer {
+      padding: 14px 18px;
+    }
+
+    .diff-select-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .easy-btn {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .easy-btn:hover,
+    .diff-card.selected .easy-btn {
+      background: var(--mint);
+      color: white;
+    }
+
+    .medium-btn {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .medium-btn:hover,
+    .diff-card.selected .medium-btn {
+      background: #e6a817;
+      color: white;
+    }
+
+    .diff-ribbon {
+      position: absolute;
+      top: 12px;
+      right: -8px;
+      background: var(--caramel);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 3px 12px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .diff-desc-box {
+      background: var(--foam);
+      border: 3px solid var(--espresso);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 22px;
+      display: none;
+    }
+
+    .diff-desc-box.visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .diff-desc-box h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--espresso);
+      margin-bottom: 8px;
+    }
+
+    .diff-desc-box p {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.7;
+    }
+
+    .diff-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    #stats-bar {
+      background: var(--roast);
+      border-radius: 16px;
+      padding: 14px 22px;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      box-shadow: var(--panel-shadow);
+      border: 1px solid rgba(200, 132, 63, 0.2);
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 90px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--latte);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--cream);
+    }
+
+    .stat-bar-wrap {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.55s ease;
+    }
+
+    .bar-money {
+      background: var(--gold);
+    }
+
+    .bar-rep {
+      background: var(--mint);
+    }
+
+    .bar-happy {
+      background: #e74c3c;
+    }
+
+    .day-indicator {
+      background: var(--caramel);
+      color: var(--foam);
+      border-radius: 10px;
+      padding: 8px 14px;
+      text-align: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .day-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .day-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .diff-badge-bar {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .dbb-easy {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .dbb-medium {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    /* Growth streak banner */
+    .growth-banner {
+      background: linear-gradient(135deg, #1a6b3a, #27ae60);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .growth-banner.visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .progress-wrap {
+      background: rgba(255, 255, 255, 0.1);
+      height: 6px;
+      border-radius: 3px;
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--caramel), var(--gold));
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .storyboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      background: var(--foam);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--panel-shadow);
+      border: 3px solid var(--espresso);
+    }
+
+    .panel.wide {
+      grid-column: 1/-1;
+    }
+
+    .panel-header {
+      background: var(--espresso);
+      color: var(--cream);
+      padding: 9px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .panel-scene {
+      background: linear-gradient(135deg, #FFF8F0, #F5EDD8);
+      min-height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      border-bottom: 2px dashed rgba(92, 51, 23, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-scene::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(92, 51, 23, 0.03) 10px, rgba(92, 51, 23, 0.03) 20px);
+    }
+
+    .panel-caption {
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      padding: 9px 14px;
+      color: var(--roast);
+      text-align: center;
+      background: rgba(200, 132, 63, 0.05);
+      border-top: 1px solid rgba(92, 51, 23, 0.1);
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .decision-section {
+      background: var(--foam);
+      border-radius: 16px;
+      box-shadow: var(--panel-shadow);
+      border: 3px solid var(--espresso);
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .decision-header {
+      background: var(--espresso);
+      padding: 15px 22px;
+      color: var(--cream);
+    }
+
+    .decision-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 21px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .decision-sub {
+      font-size: 13px;
+      opacity: 0.68;
+    }
+
+    .decision-body {
+      padding: 22px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .option-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .option-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .option-card.ai-card {
+      border-color: #2980b9;
+    }
+
+    .option-card.human-card {
+      border-color: var(--mint);
+    }
+
+    .option-card-header {
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .ai-card .option-card-header {
+      background: #2980b9;
+      color: white;
+    }
+
+    .human-card .option-card-header {
+      background: var(--mint);
+      color: white;
+    }
+
+    .option-icon {
+      font-size: 24px;
+    }
+
+    .option-body {
+      background: white;
+      padding: 15px;
+    }
+
+    .option-desc {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 11px;
+      line-height: 1.6;
+    }
+
+    .option-effects {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .etag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      width: fit-content;
+    }
+
+    .e-pos {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .e-neg {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .e-neu {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .option-btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border-top: 1px solid rgba(0, 0, 0, 0.07);
+      transition: all 0.2s;
+    }
+
+    .ai-card .option-btn {
+      background: #EBF5FB;
+      color: #1a5276;
+    }
+
+    .ai-card .option-btn:hover {
+      background: #2980b9;
+      color: white;
+    }
+
+    .human-card .option-btn {
+      background: #E8F8F5;
+      color: #2e7d61;
+    }
+
+    .human-card .option-btn:hover {
+      background: var(--mint);
+      color: white;
+    }
+
+    .diff-mod-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: auto;
+    }
+
+    .dmt-easy {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .dmt-medium {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .result-panel {
+      background: var(--foam);
+      border-radius: 16px;
+      box-shadow: var(--panel-shadow);
+      border: 3px solid var(--espresso);
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .result-header {
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .rh-event {
+      background: #8e44ad;
+    }
+
+    .result-body {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .result-emoji {
+      font-size: 52px;
+      line-height: 1;
+    }
+
+    .result-text h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      margin-bottom: 7px;
+      color: var(--espresso);
+    }
+
+    .result-text p {
+      color: #555;
+      font-size: 13px;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .chip-up {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .chip-dn {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .chip-neu {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .event-banner {
+      background: linear-gradient(135deg, #8e44ad, #5b2c6f);
+      color: white;
+      padding: 11px 22px;
+      font-family: 'Caveat', cursive;
+      font-size: 18px;
+      text-align: center;
+      border-bottom: 3px solid var(--espresso);
+    }
+
+    .lesson-box {
+      background: linear-gradient(135deg, #FFF8E7, #FFF3CC);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 15px 19px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 13px;
+      align-items: flex-start;
+    }
+
+    .lesson-icon {
+      font-size: 26px;
+    }
+
+    .lesson-text {
+      font-size: 13px;
+      color: #7d6008;
+      line-height: 1.65;
+    }
+
+    .lesson-text strong {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+      color: #b7950b;
+    }
+
+    .end-card {
+      background: var(--foam);
+      border-radius: 20px;
+      border: 3px solid var(--espresso);
+      overflow: hidden;
+      box-shadow: var(--panel-shadow);
+      margin-bottom: 20px;
+    }
+
+    .end-header {
+      background: var(--espresso);
+      padding: 36px 36px 28px;
+      color: var(--cream);
+      text-align: center;
+    }
+
+    .end-emoji {
+      font-size: 72px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .end-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 34px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .end-score {
+      display: inline-block;
+      background: var(--caramel);
+      color: var(--foam);
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      font-weight: 900;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      line-height: 84px;
+      margin: 14px auto;
+    }
+
+    .end-body {
+      padding: 28px;
+    }
+
+    .end-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 13px;
+      margin-bottom: 22px;
+    }
+
+    .end-stat-box {
+      background: var(--cream);
+      border-radius: 12px;
+      padding: 14px;
+      border: 2px solid rgba(92, 51, 23, 0.1);
+    }
+
+    .end-stat-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--roast);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .end-stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--espresso);
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+      margin-bottom: 22px;
+    }
+
+    .hcell {
+      background: var(--cream);
+      border-radius: 8px;
+      padding: 7px;
+      text-align: center;
+      border: 1px solid rgba(92, 51, 23, 0.1);
+    }
+
+    .hcell-day {
+      font-weight: 700;
+      color: var(--roast);
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .hcell-icon {
+      font-size: 15px;
+      margin: 3px 0;
+    }
+
+    .hcell-type {
+      font-size: 10px;
+      color: #777;
+    }
+
+    .lessons-summary {
+      background: linear-gradient(135deg, #FFF8E7, #FFF3CC);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 18px 22px;
+      text-align: left;
+      margin-bottom: 22px;
+    }
+
+    .lessons-summary h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      color: var(--espresso);
+      margin-bottom: 11px;
+    }
+
+    .lessons-summary ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .lessons-summary li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 13px;
+      color: #7d6008;
+      line-height: 1.55;
+    }
+
+    .bankrupt-bar {
+      background: var(--red);
+      color: white;
+      padding: 11px 22px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .intro-panel {
+      background: var(--foam);
+      border-radius: 12px;
+      border: 3px solid var(--espresso);
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .intro-top {
+      background: var(--espresso);
+      padding: 6px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--latte);
+      font-weight: 600;
+    }
+
+    .intro-emo {
+      font-size: 44px;
+      padding: 18px;
+      display: block;
+    }
+
+    .intro-txt {
+      padding: 0 14px 14px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .shimmer {
+      animation: shimmer 0.3s ease;
+    }
+
+    @keyframes shimmer {
+      from {
+        opacity: 0;
+        transform: scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media(max-width:700px) {
+
+      .diff-grid,
+      .options-grid,
+      .storyboard,
+      .intro-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel.wide {
+        grid-column: auto;
+      }
+
+      .end-stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .history-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .result-body {
+        grid-template-columns: 1fr;
+      }
+
+      .title-btns {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- TITLE -->
+    <div id="title-screen" class="screen active">
+      <span class="title-art">☕</span>
+      <div class="badge">Educational Game · 15 Days</div>
+      <h1 class="game-title">Brew<br>Decisions</h1>
+      <p class="game-sub">Run your own coffee shop</p>
+      <p class="title-desc">You've just taken over a small coffee shop. Over 15 days you'll make daily choices — use AI
+        tools to cut costs, or invest in people to build quality. Every decision shapes your shop's story. Find the
+        right balance.</p>
+      <div class="title-btns">
+        <button class="btn btn-primary" onclick="showScreen('diff-screen')">Choose Difficulty →</button>
+        <button class="btn btn-ghost" onclick="showScreen('intro-screen')">How to Play</button>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY -->
+    <div id="intro-screen" class="screen">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div class="badge">How to Play</div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:32px;color:var(--cream);">Your 15-Day Challenge</h2>
+      </div>
+      <div class="intro-grid">
+        <div class="intro-panel">
+          <div class="intro-top">🤖 AI Choice</div>
+          <span class="intro-emo">🤖</span>
+          <p class="intro-txt"><strong style="color:var(--roast);">Cheaper to run</strong> — saves money each day, but
+            customers notice. Overusing it erodes reputation and happiness over time.</p>
+        </div>
+        <div class="intro-panel">
+          <div class="intro-top">🧑 Human Choice</div>
+          <span class="intro-emo">🧑‍🍳</span>
+          <p class="intro-txt"><strong style="color:var(--roast);">More expensive</strong> — builds genuine connection
+            and drives revenue long-term. Hard to afford every single day.</p>
+        </div>
+        <div class="intro-panel">
+          <div class="intro-top">⚡ Random Events</div>
+          <span class="intro-emo">🎲</span>
+          <p class="intro-txt">Surprise events can strike any day. Your past choices determine whether they help or
+            hurt. Higher difficulty means more events.</p>
+        </div>
+        <div class="intro-panel">
+          <div class="intro-top">📈 Revenue Growth</div>
+          <span class="intro-emo">📈</span>
+          <p class="intro-txt"><strong style="color:var(--roast);">Early momentum!</strong> Revenue grows by <strong>+7%
+              each day</strong> for the first 7 days, then holds steady. Plus, every point of Reputation adds $1 to
+            daily earnings.</p>
+        </div>
+      </div>
+      <div class="lesson-box">
+        <span class="lesson-icon">🎯</span>
+        <div class="lesson-text">
+          <strong>Goal</strong>
+          Survive all 15 days without going bankrupt. Finish with high Reputation and Happiness for the best grade. Each
+          day's scenario is drawn at random from a pool of 30 — no two games are the same!
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button class="btn btn-ghost" onclick="showScreen('title-screen')">← Back</button>
+        <button class="btn btn-primary" onclick="showScreen('diff-screen')">Choose Difficulty →</button>
+      </div>
+    </div>
+
+    <!-- DIFFICULTY -->
+    <div id="diff-screen" class="screen">
+      <div class="diff-header">
+        <div class="badge">Step 1 of 2</div>
+        <div class="diff-title">Choose Your Difficulty</div>
+        <div class="diff-subtitle">How hard do you want running the shop to be?</div>
+      </div>
+      <div class="diff-grid">
+        <div class="diff-card" id="card-easy" onclick="selectDiff('easy')">
+          <div class="diff-ribbon">BEGINNER</div>
+          <div class="diff-card-top">
+            <span class="diff-emoji">🌱</span>
+            <div class="diff-name">Beginner</div>
+            <div class="diff-tagline">"Just starting out"</div>
+          </div>
+          <div class="diff-card-stats">
+            <div class="diff-stat-row"><span class="diff-stat-label">💰 Starting Money</span><span class="diff-stat-val"
+                style="color:var(--mint);">$800</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">📈 Cost Multiplier</span><span
+                class="diff-stat-val">×1.0</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">⚡ Surprise Event Chance</span><span
+                class="diff-stat-val">8%</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">💸 Daily Overhead</span><span
+                class="diff-stat-val">$40</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">📊 Revenue Modifier</span><span
+                class="diff-stat-val" style="color:var(--mint);">+10%</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">📈 Days 1–7 Growth</span><span
+                class="diff-stat-val" style="color:var(--mint);">+7%/day</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">⭐ Rep Bonus</span><span class="diff-stat-val"
+                style="color:var(--mint);">$1 per rep pt</span></div>
+          </div>
+          <div class="diff-card-footer"><button class="diff-select-btn easy-btn">Select Beginner</button></div>
+        </div>
+        <div class="diff-card" id="card-medium" onclick="selectDiff('medium')">
+          <div class="diff-card-top">
+            <span class="diff-emoji">☕</span>
+            <div class="diff-name">Normal</div>
+            <div class="diff-tagline">"Running a real shop"</div>
+          </div>
+          <div class="diff-card-stats">
+            <div class="diff-stat-row"><span class="diff-stat-label">💰 Starting Money</span><span class="diff-stat-val"
+                style="color:#e6a817;">$100</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">📈 Cost Multiplier</span><span
+                class="diff-stat-val">×2.6</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">⚡ Surprise Event Chance</span><span
+                class="diff-stat-val">20%</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">💸 Daily Overhead</span><span
+                class="diff-stat-val">$105</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">📊 Revenue Modifier</span><span
+                class="diff-stat-val" style="color:var(--red);">−28%</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">🤖 AI Rep Penalty</span><span class="diff-stat-val"
+                style="color:var(--red);">×3.0 harder</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">📈 Days 1–7 Growth</span><span
+                class="diff-stat-val" style="color:var(--mint);">+7%/day</span></div>
+            <div class="diff-stat-row"><span class="diff-stat-label">⭐ Rep Bonus</span><span class="diff-stat-val"
+                style="color:var(--mint);">$1 per rep pt</span></div>
+          </div>
+          <div class="diff-card-footer"><button class="diff-select-btn medium-btn">Select Normal</button></div>
+        </div>
+      </div>
+      <div class="diff-desc-box" id="diff-desc-box"></div>
+      <div class="diff-actions">
+        <button class="btn btn-ghost" onclick="showScreen('title-screen')">← Back</button>
+        <button class="btn btn-primary" id="start-btn" disabled style="opacity:0.5;cursor:not-allowed;"
+          onclick="startGame()">Open the Shop! ☕</button>
+      </div>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+      <div class="progress-wrap">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div id="stats-bar">
+        <div class="day-indicator">
+          <div class="day-num" id="day-display">1</div>
+          <div class="day-label">/ 15 Days</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">💰 Money</div>
+          <div class="stat-value" id="stat-money">$800</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar-fill bar-money" id="bar-money" style="width:80%"></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">⭐ Reputation</div>
+          <div class="stat-value" id="stat-rep">50</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar-fill bar-rep" id="bar-rep" style="width:50%"></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">😊 Happiness</div>
+          <div class="stat-value" id="stat-happy">50</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar-fill bar-happy" id="bar-happy" style="width:50%"></div>
+          </div>
+        </div>
+        <div class="diff-badge-bar" id="diff-badge-bar">Easy</div>
+      </div>
+      <div class="growth-banner" id="growth-banner"></div>
+      <div id="game-content"></div>
+    </div>
+
+    <!-- END -->
+    <div id="end-screen" class="screen"></div>
+
+  </div>
+
+  <script>
+    // ═══════════════ DIFFICULTY CONFIG ═══════════════
+    // repRevWeight is now 1.0 for both difficulties: every 1 rep = $1 extra revenue
+    const DIFF_CONFIG = {
+      easy: {
+        name: 'Beginner', emoji: '\u{1F331}', bbClass: 'dbb-easy',
+        startMoney: 800, costMult: 1.0, overhead: 40, revMult: 1.10, eventChance: 0.08,
+        startRep: 50, startHappy: 50, aiRepMult: 1.0,
+        repRevWeight: 1.0,   // $1 per rep point
+        happyRevWeight: 0.35,
+        desc: 'Perfect for first-timers. Costs are manageable, revenue is forgiving, and surprise events are rare. Revenue grows +7% each day for the first 7 days, and every reputation point adds $1 to your daily earnings.'
+      },
+      medium: {
+        name: 'Normal', emoji: '\u2615', bbClass: 'dbb-medium',
+        startMoney: 100, costMult: 2.6, overhead: 105, revMult: 0.60, eventChance: 0.20,
+        startRep: 50, startHappy: 50, aiRepMult: 3.0,
+        repRevWeight: 1.0,   // $1 per rep point
+        happyRevWeight: 0.35,
+        desc: 'Serious challenge. $100 to start, costs 2.6x, revenue cut 40%, and $105 overhead bleeding you daily. Revenue grows +7%/day for the first 7 days — use that window wisely. Every rep point still adds $1, so protecting your reputation matters even more.'
+      },
+    };
+
+    // ═══════════════ GROWTH MULTIPLIER HELPER ═══════════════
+    // Days 1–7: revenue × 1.07^(day-1)
+    // Day 8+:   revenue × 1.07^6  (locked at day-7 peak, ~50% total boost)
+    function getGrowthMult(day) {
+      const cappedDay = Math.min(day, 7);
+      return Math.pow(1.07, cappedDay - 1);
+    }
+
+    // ═══════════════ 30 DAILY SCENARIOS ═══════════════
+    const ALL_SCENARIOS = [
+      {
+        id: 'register', scene: '🏪', caption: 'Your coffee shop opens its doors for the first time!',
+        situation: 'It\'s 7:30 AM — your first customer rush is starting. How do they place their order?',
+        decision: 'How will you handle the register?', context: 'The checkout process sets the first impression of your shop.',
+        ai: { label: 'Self-Service Kiosk', icon: '🖥️', desc: 'Touchscreen ordering — fast and accurate, but cold and impersonal.', cost: 18, rep: -7, happy: -5, revenue: 130 },
+        human: { label: 'Human Cashier', icon: '🧑‍💼', desc: 'A friendly cashier who greets customers by name. Warm and memorable.', cost: 55, rep: +6, happy: +7, revenue: 160 },
+        lesson: 'First impressions matter. Human warmth at the register builds loyal regulars — but it costs more. AI kiosks are consistent but transactional.'
+      },
+      {
+        id: 'barista', scene: '☕', caption: 'The espresso machine is running hot.',
+        situation: 'Customers are demanding specialty drinks. Quality is on the line.',
+        decision: 'Who prepares the coffee drinks today?', context: 'Coffee quality is the core of your business reputation.',
+        ai: { label: 'Auto-Brew Machine', icon: '🤖', desc: 'Precise machine makes identical drinks every time. Fast but generic.', cost: 14, rep: -5, happy: -6, revenue: 120 },
+        human: { label: 'Skilled Barista', icon: '☕', desc: 'A trained barista crafts each drink with care and reads the room.', cost: 60, rep: +8, happy: +9, revenue: 172 },
+        lesson: 'Core products need human craft. An AI replicates a recipe; a barista creates an experience.'
+      },
+      {
+        id: 'complaints', scene: '📱', caption: 'A negative review is going viral locally.',
+        situation: 'A 1-star review was posted last night. People are reading it right now.',
+        decision: 'How do you handle the complaint?', context: 'Your response strategy can win or lose loyal customers.',
+        ai: { label: 'AI Response Bot', icon: '🤖', desc: 'Polite automated templates sent 24/7. Customers can spot the copy-paste.', cost: 8, rep: -3, happy: -6, revenue: 122 },
+        human: { label: 'Personal Response', icon: '📝', desc: 'A genuine personal reply with a free drink offer. Time-consuming but powerful.', cost: 40, rep: +9, happy: +6, revenue: 155 },
+        lesson: 'A human reply turns angry customers into advocates. AI bots feel dismissive even when politely worded.'
+      },
+      {
+        id: 'inventory', scene: '📦', caption: 'Supplies are running dangerously low.',
+        situation: 'You need to reorder before tomorrow morning. What\'s your system?',
+        decision: 'How do you manage your inventory?', context: 'Running out of supplies ruins the entire customer experience.',
+        ai: { label: 'AI Inventory System', icon: '📊', desc: 'Algorithm tracks stock and auto-orders. Efficient but can over-order.', cost: 11, rep: -2, happy: -5, revenue: 140 },
+        human: { label: 'Manual Tracking', icon: '📋', desc: 'You check shelves and build supplier relationships for better deals.', cost: 33, rep: +4, happy: +3, revenue: 147 },
+        lesson: 'This is one area where AI genuinely helps. Smart logistics automation frees humans for what matters most.'
+      },
+      {
+        id: 'cleaning', scene: '🧹', caption: 'The morning rush left the shop in a state.',
+        situation: 'Tables are cluttered, floor needs sweeping. Customers are noticing.',
+        decision: 'How do you handle cleaning?', context: 'A clean environment signals quality and care.',
+        ai: { label: 'Robot Vacuum', icon: '🤖', desc: 'Automated robot handles floor cleaning quietly between customers.', cost: 7, rep: -10, happy: -2, revenue: 133 },
+        human: { label: 'Cleaning Staff', icon: '🧹', desc: 'A dedicated cleaner keeps the whole shop spotless and welcoming.', cost: 36, rep: +5, happy: +6, revenue: 150 },
+        lesson: 'Ambiance matters. A visibly cared-for space tells customers you value their visit.'
+      },
+      {
+        id: 'marketing', scene: '📣', caption: 'A competitor opened two blocks away.',
+        situation: 'Foot traffic has dipped. You need to attract new customers fast.',
+        decision: 'How do you market the shop?', context: 'Getting new customers costs money but builds your long-term base.',
+        ai: { label: 'Targeted Social Ads', icon: '📲', desc: 'AI-generated ads targeting local users. Cheap and measurable but generic.', cost: 22, rep: -4, happy: -1, revenue: 144 },
+        human: { label: 'Community Events', icon: '🎉', desc: 'Host a tasting morning and hand out flyers. More effort, builds real loyalty.', cost: 65, rep: +10, happy: +8, revenue: 176 },
+        lesson: 'AI marketing reaches many people; human events build real loyalty and word-of-mouth.'
+      },
+      {
+        id: 'menu', scene: '🍰', caption: 'Customers want food to go with their coffee.',
+        situation: 'Your pastry selection is thin. Time to update the menu.',
+        decision: 'How do you design the pastry menu?', context: 'A thoughtful menu increases average spending per visit.',
+        ai: { label: 'AI Menu Generator', icon: '🤖', desc: 'Algorithm suggests trending items. Data-driven but lacks local flavour.', cost: 5, rep: -2, happy: -3, revenue: 129 },
+        human: { label: 'Local Baker Partner', icon: '🥐', desc: 'Partner with a nearby bakery. More expensive but authentic and memorable.', cost: 50, rep: +9, happy: +10, revenue: 170 },
+        lesson: 'Authentic beats algorithmic. Customers connect with locally-sourced products. AI can suggest; humans must curate.'
+      },
+      {
+        id: 'ambiance', scene: '🎧', caption: 'Customers say the shop feels clinical.',
+        situation: 'The atmosphere feels cold. People aren\'t lingering.',
+        decision: 'How do you manage the shop\'s music and ambiance?', context: 'Atmosphere affects how long customers stay — and how much they spend.',
+        ai: { label: 'AI Music Algorithm', icon: '🎵', desc: 'Auto-playlist adjusted by crowd data. Efficient but feels calculated.', cost: 4, rep: -7, happy: -2, revenue: 131 },
+        human: { label: 'Live Weekend Music', icon: '🎸', desc: 'Book a local musician for weekend mornings. Draws a crowd, builds identity.', cost: 70, rep: +11, happy: +12, revenue: 185 },
+        lesson: 'Dwell time equals more sales. Live human experiences create memories AI cannot replicate.'
+      },
+      {
+        id: 'queue', scene: '🚗', caption: 'Long queues are forming at the door.',
+        situation: 'The 8 AM rush is chaos. People are leaving without ordering.',
+        decision: 'How do you speed up service?', context: 'Speed matters — but so does the warmth of being served.',
+        ai: { label: 'Mobile Pre-Order App', icon: '📱', desc: 'Customers order ahead via app. Efficient but removes spontaneous upsell.', cost: 16, rep: -3, happy: -4, revenue: 147 },
+        human: { label: 'Extra Staff at Peak', icon: '👥', desc: 'Hire part-time help for rush hours. Warm, fast — customers feel seen.', cost: 54, rep: +7, happy: +8, revenue: 166 },
+        lesson: 'AI speeds things up; extra human hands give you speed AND warmth. Sometimes the best tool is more people.'
+      },
+      {
+        id: 'training', scene: '📚', caption: 'New staff need guidance on your standards.',
+        situation: 'They start serving customers tomorrow. How are they prepared?',
+        decision: 'How do you train new staff?', context: 'Well-trained staff deliver consistent quality and keep customers happy.',
+        ai: { label: 'AI Training Videos', icon: '🖥️', desc: 'Interactive video modules covering every procedure. Cheap and scalable.', cost: 9, rep: -1, happy: -2, revenue: 129 },
+        human: { label: 'Mentorship Programme', icon: '🤝', desc: 'Senior staff personally train newcomers. Takes time but builds culture.', cost: 44, rep: +7, happy: +6, revenue: 161 },
+        lesson: 'Culture is taught by people, not videos. Human mentorship builds understanding, empathy, and team loyalty.'
+      },
+      {
+        id: 'critic', scene: '⭐', caption: 'A food critic is visiting today.',
+        situation: 'A local blogger is coming in. First impressions are everything.',
+        decision: 'How do you handle this high-profile guest?', context: 'A glowing review could transform your business.',
+        ai: { label: 'Standard AI Service', icon: '🤖', desc: 'Run the normal AI-assisted setup. Consistent but nothing memorable.', cost: 14, rep: -5, happy: -4, revenue: 124 },
+        human: { label: 'Chef\'s Table Experience', icon: '👨‍🍳', desc: 'Serve personally, explain everything, make them feel like royalty.', cost: 80, rep: +15, happy: +12, revenue: 200 },
+        lesson: 'High-stakes moments need human judgment. Critical moments of impression require artistry, not automation.'
+      },
+      {
+        id: 'loyalty', scene: '🌧️', caption: 'A slow rainy Thursday. Traffic is low.',
+        situation: 'You need to give regulars a reason to brave the weather.',
+        decision: 'How do you build customer loyalty today?', context: 'Loyal regulars are the backbone of any small business.',
+        ai: { label: 'AI Loyalty Points App', icon: '📲', desc: 'Digital stamp card with automated rewards. Convenient but impersonal.', cost: 11, rep: -12, happy: -2, revenue: 134 },
+        human: { label: 'Handwritten Thank-You', icon: '💌', desc: 'Write personal notes to top regulars with a free drink token inside.', cost: 28, rep: +10, happy: +11, revenue: 160 },
+        lesson: 'Loyalty is emotional, not transactional. A handwritten note says "I see you as a person" — an app doesn\'t.'
+      },
+      {
+        id: 'maintenance', scene: '🔧', caption: 'The espresso machine is making strange noises.',
+        situation: 'It could fail during tomorrow\'s peak. You need to act now.',
+        decision: 'How do you handle equipment maintenance?', context: 'A broken machine on a busy morning is catastrophic.',
+        ai: { label: 'AI Predictive Sensors', icon: '📡', desc: 'Sensors monitor machine health and flag issues. Efficient and proactive.', cost: 18, rep: -4, happy: -3, revenue: 147 },
+        human: { label: 'Expert Technician', icon: '🔧', desc: 'Book an engineer for a full service today. Expensive but fully thorough.', cost: 68, rep: +6, happy: +5, revenue: 163 },
+        lesson: 'AI monitoring is useful for routine tracking. For high-stakes equipment, human expertise gives real peace of mind.'
+      },
+      {
+        id: 'community', scene: '🏫', caption: 'A local school wants a community partnership.',
+        situation: 'They\'ve reached out about a student discount programme.',
+        decision: 'How do you engage with the local community?', context: 'Community ties bring long-term loyalty and goodwill.',
+        ai: { label: 'Automated Newsletter', icon: '📧', desc: 'AI-written email to local organisations. Polished but generic.', cost: 7, rep: -1, happy: 0, revenue: 131 },
+        human: { label: 'In-Person Meeting', icon: '🏫', desc: 'Attend personally, listen to needs, offer a tailored discount programme.', cost: 48, rep: +13, happy: +10, revenue: 178 },
+        lesson: 'Community is built in person. An email can inform; showing up builds trust and belonging.'
+      },
+      {
+        id: 'social', scene: '📸', caption: 'Your social media hasn\'t been updated in days.',
+        situation: 'Potential customers are checking your page and finding silence.',
+        decision: 'How do you manage your social media presence?', context: 'Online presence drives footfall for modern coffee shops.',
+        ai: { label: 'AI Content Scheduler', icon: '🤖', desc: 'Auto-generates and schedules posts with AI captions. Consistent but soulless.', cost: 10, rep: -1, happy: -1, revenue: 133 },
+        human: { label: 'Authentic Daily Posts', icon: '📸', desc: 'You or a staff member shares real moments. Genuine, personal, and engaging.', cost: 30, rep: +7, happy: +6, revenue: 158 },
+        lesson: 'Authenticity wins online. Audiences can tell the difference between a real human moment and AI-generated content.'
+      },
+      {
+        id: 'delivery', scene: '🚴', caption: 'Customers are asking about delivery.',
+        situation: 'Several regulars want you to deliver. It\'s a growing demand.',
+        decision: 'How do you launch a delivery service?', context: 'Delivery expands reach but can hurt quality if done poorly.',
+        ai: { label: 'Third-Party Delivery App', icon: '📦', desc: 'Sign up with a major app. High commissions but huge reach immediately.', cost: 30, rep: -3, happy: -2, revenue: 155 },
+        human: { label: 'In-House Bike Courier', icon: '🚴', desc: 'Hire a local courier. More expensive but full control over quality.', cost: 60, rep: +8, happy: +7, revenue: 170 },
+        lesson: 'Control matters in delivery. Third-party apps scale fast but take your margin and brand identity.'
+      },
+      {
+        id: 'pricing', scene: '💷', caption: 'Costs have risen. Your pricing hasn\'t.',
+        situation: 'You need to raise prices or find other ways to save. How?',
+        decision: 'How do you manage your pricing strategy?', context: 'Pricing affects volume, perception, and profitability.',
+        ai: { label: 'AI Dynamic Pricing', icon: '🤖', desc: 'Algorithm adjusts prices by demand. Maximises revenue but feels off-putting.', cost: 12, rep: -4, happy: -5, revenue: 145 },
+        human: { label: 'Transparent Raise', icon: '📋', desc: 'Announce a modest increase with a heartfelt explanation. Honest and respectful.', cost: 20, rep: +3, happy: +2, revenue: 152 },
+        lesson: 'Price transparency builds trust. Customers accept fair increases when they understand why.'
+      },
+      {
+        id: 'energy', scene: '💡', caption: 'Your energy bill is eye-wateringly high.',
+        situation: 'You need to cut running costs without cutting quality.',
+        decision: 'How do you tackle energy efficiency?', context: 'Lower costs free up money for staff and ingredients.',
+        ai: { label: 'Smart Energy System', icon: '⚡', desc: 'AI monitors and optimises all appliances. Real savings, zero effort.', cost: 25, rep: -3, happy: -1, revenue: 140 },
+        human: { label: 'Staff Awareness Drive', icon: '💡', desc: 'Train staff on energy habits. Slower savings, but builds ownership culture.', cost: 15, rep: +2, happy: +4, revenue: 138 },
+        lesson: 'Energy efficiency is one area where AI genuinely wins on numbers — but involving staff builds wider responsibility.'
+      },
+      {
+        id: 'wellness', scene: '❤️', caption: 'Staff seem tired and unmotivated.',
+        situation: 'Morale is low and it\'s starting to show in service quality.',
+        decision: 'How do you invest in staff wellbeing?', context: 'Happy staff deliver better service — it\'s a direct connection.',
+        ai: { label: 'Wellness App Subscription', icon: '📱', desc: 'Give staff access to a mental health app. Thoughtful but feels tick-box.', cost: 15, rep: -1, happy: -3, revenue: 132 },
+        human: { label: 'Team Social Event', icon: '🍕', desc: 'Take the team out for a meal on you. Expensive but builds real bonds.', cost: 65, rep: +8, happy: +14, revenue: 162 },
+        lesson: 'Wellbeing is personal. Genuine human investment in your team\'s happiness transforms their performance.'
+      },
+      {
+        id: 'feedback', scene: '📋', caption: 'You realise you don\'t know what customers really think.',
+        situation: 'Without honest feedback you can\'t improve. How do you gather it?',
+        decision: 'How do you collect customer feedback?', context: 'Feedback drives improvement — only if customers are honest.',
+        ai: { label: 'AI Survey System', icon: '📊', desc: 'QR code surveys auto-analysed by AI. High volume data, low response rate.', cost: 8, rep: -2, happy: -1, revenue: 133 },
+        human: { label: 'Personal Conversations', icon: '💬', desc: 'Staff ask customers directly for opinions. Slower but far richer insights.', cost: 20, rep: +6, happy: +8, revenue: 150 },
+        lesson: 'Quantitative data tells you what; conversations tell you why. AI surveys scale collection — humans get the real story.'
+      },
+      {
+        id: 'seasonal', scene: '🎃', caption: 'A big seasonal moment is approaching.',
+        situation: 'Halloween, Christmas, or Valentine\'s — a themed campaign could boost sales hugely.',
+        decision: 'How do you run your seasonal promotion?', context: 'Seasonal campaigns can massively boost revenue if done with personality.',
+        ai: { label: 'AI-Generated Campaign', icon: '🤖', desc: 'AI designs promotional graphics and copy. Fast and cheap but visibly generic.', cost: 12, rep: -1, happy: 0, revenue: 138 },
+        human: { label: 'Handcrafted Theme', icon: '🎨', desc: 'Staff decorate by hand and design specials themselves. Unique and shareable.', cost: 55, rep: +11, happy: +9, revenue: 178 },
+        lesson: 'Seasonal moments thrive on personality. A handcrafted campaign feels like love; AI promotions feel like minimum effort.'
+      },
+      {
+        id: 'accessibility', scene: '♿', caption: 'A customer mentions your shop is hard to access.',
+        situation: 'Accessibility could be holding back a whole segment of potential customers.',
+        decision: 'How do you improve shop accessibility?', context: 'Inclusive design benefits everyone and signals your values.',
+        ai: { label: 'Virtual Ordering System', icon: '💻', desc: 'Voice-activated and screen-reader-compatible ordering. Useful but limited.', cost: 20, rep: -4, happy: -2, revenue: 140 },
+        human: { label: 'Physical Renovation', icon: '🚪', desc: 'Install ramps, adjust counters, train staff. Major investment, lasting impact.', cost: 75, rep: +12, happy: +8, revenue: 165 },
+        lesson: 'Inclusion is both moral and commercial. Physical access paired with well-trained staff sends the strongest signal of welcome.'
+      },
+      {
+        id: 'waste', scene: '🌿', caption: 'You\'re throwing away a shocking amount of food daily.',
+        situation: 'Waste is costing money and damaging the planet. Time to act.',
+        decision: 'How do you tackle food waste?', context: 'Sustainable practices attract ethical consumers and cut costs.',
+        ai: { label: 'AI Waste Prediction', icon: '🤖', desc: 'Algorithm predicts demand to minimise over-ordering. Accurate and efficient.', cost: 15, rep: -5, happy: -3, revenue: 143 },
+        human: { label: 'End-of-Day Donation', icon: '🍞', desc: 'Partner with a local food bank for daily leftovers. Earns community respect.', cost: 20, rep: +10, happy: +9, revenue: 160 },
+        lesson: 'Both options reduce waste — but donation creates community ties that data alone cannot buy. Values are visible in actions.'
+      },
+      // —— WILD ★ ——
+      {
+        id: 'flash_mob', wild: true, scene: '🎶', caption: '★ Something unexpected is happening outside!',
+        situation: 'A spontaneous street performer has drawn a huge crowd right outside your door. Do you engage?',
+        decision: 'How do you capitalise on the crowd outside?', context: 'A crowd this size is a once-in-a-while opportunity.',
+        ai: { label: 'Quick Digital Promotion', icon: '📲', desc: 'Push a location-tagged offer on social media to catch the crowd.', cost: 10, rep: -4, happy: -3, revenue: 155 },
+        human: { label: 'Go Outside & Invite Them', icon: '🎉', desc: 'Send staff out with free samples and personal invitations. Chaotic but charming.', cost: 45, rep: +14, happy: +15, revenue: 190 },
+        lesson: 'Spontaneous human moments create the best memories. A real person handing you a sample is magic — a notification is just a notification.'
+      },
+      {
+        id: 'influencer', wild: true, scene: '🌟', caption: '★ An influencer just walked through your door.',
+        situation: '80,000 local followers. They\'re looking around, phone in hand.',
+        decision: 'How do you handle this surprise VIP?', context: 'Their post could launch your shop — or quietly disappoint their audience.',
+        ai: { label: 'Auto VIP Discount App', icon: '🤖', desc: 'App detects their profile and auto-offers a discount. Cold and clinical.', cost: 12, rep: -9, happy: -1, revenue: 138 },
+        human: { label: 'Personal Welcome Experience', icon: '🌟', desc: 'Greet them personally, craft something special, share your shop\'s story.', cost: 60, rep: +18, happy: +14, revenue: 210 },
+        lesson: 'Influencers have audiences because they share authentic human moments. Give them one.'
+      },
+      {
+        id: 'news', wild: true, scene: '📰', caption: '★ A journalist wants to feature your shop.',
+        situation: 'A local newspaper is doing a piece on independent businesses. They want YOUR story.',
+        decision: 'How do you present your shop\'s story?', context: 'A genuine feature is worth thousands in advertising.',
+        ai: { label: 'AI-Written Press Kit', icon: '📄', desc: 'A slick AI-generated press release. Professional but reads like every other one.', cost: 8, rep: -4, happy: -1, revenue: 142 },
+        human: { label: 'Tell Your Real Story', icon: '📖', desc: 'Sit for an interview, be vulnerable and honest about why you opened this shop.', cost: 25, rep: +16, happy: +10, revenue: 195 },
+        lesson: 'Journalists and readers want humanity, not polish. The messy, real story of why you opened is far more compelling than any press kit.'
+      },
+      {
+        id: 'mystery_ingr', wild: true, scene: '🧪', caption: '★ A supplier offers an unusual new ingredient.',
+        situation: 'An exotic, locally-grown ingredient at an introductory rate. It\'s a gamble.',
+        decision: 'How do you respond to this unexpected offer?', context: 'Innovation is risky but can set you apart from every competitor.',
+        ai: { label: 'AI Market Analysis', icon: '📊', desc: 'Run the ingredient through trend data before committing. Safe but slow.', cost: 10, rep: -2, happy: 0, revenue: 135 },
+        human: { label: 'Taste It & Trust Your Gut', icon: '👨‍🍳', desc: 'Try it yourself, get the team to taste it, make a call. Risky but exciting.', cost: 40, rep: +9, happy: +11, revenue: 168 },
+        lesson: 'Culinary creativity is fundamentally human. Data has no taste buds. Trust your team\'s palate.'
+      },
+      {
+        id: 'competitor_spy', wild: true, scene: '🕵️', caption: '★ You notice someone taking notes in your shop.',
+        situation: 'You recognise them — it\'s someone from the competitor down the road.',
+        decision: 'How do you respond?', context: 'How you handle awkward situations reveals your character.',
+        ai: { label: 'Log with Security System', icon: '🎥', desc: 'Use CCTV AI to document the visit for future reference. Cautious.', cost: 5, rep: -2, happy: -3, revenue: 128 },
+        human: { label: 'Buy Them a Coffee', icon: '☕', desc: 'Walk over, introduce yourself, offer them a free drink. Confidence and class.', cost: 15, rep: +12, happy: +8, revenue: 162 },
+        lesson: 'Generosity and confidence are powerful brand signals. The independent coffee world is small — grace beats paranoia.'
+      },
+      {
+        id: 'sample_day', wild: true, scene: '🎁', caption: '★ You have leftover stock — free sample opportunity!',
+        situation: 'Running a free sample event could draw in new customers today.',
+        decision: 'How do you run the sample giveaway?', context: 'Generosity can be a powerful acquisition strategy if done right.',
+        ai: { label: 'Geo-Targeted Digital Vouchers', icon: '📲', desc: 'Push digital vouchers to users within 500m. Efficient but clinical.', cost: 18, rep: -3, happy: -2, revenue: 145 },
+        human: { label: 'Staff Stand Outside', icon: '🧁', desc: 'Staff hand out real samples on the street with big smiles and stories.', cost: 50, rep: +13, happy: +14, revenue: 178 },
+        lesson: 'The sample day works because of human interaction, not just the product. Eye contact and a genuine smile convert passersby.'
+      },
+      {
+        id: 'quiz_night', wild: true, scene: '🎉', caption: '★ A customer suggests hosting a quiz night.',
+        situation: 'It would be an evening event — effort, cost, but potential for real community buzz.',
+        decision: 'Do you host the quiz night — and how?', context: 'Events transform a coffee shop into a community hub.',
+        ai: { label: 'AI-Hosted Digital Quiz', icon: '📱', desc: 'Customers join via app, AI asks questions, leaderboard on screen. Novelty only.', cost: 20, rep: -4, happy: -3, revenue: 150 },
+        human: { label: 'Live Human Quiz Master', icon: '🎤', desc: 'A staff member or hired host runs it live. Laughs, banter, real human energy.', cost: 65, rep: +14, happy: +16, revenue: 192 },
+        lesson: 'Community events work because of shared human experience. A live host makes memories; an AI quiz is just a tech demo.'
+      },
+    ];
+
+    // ═══════════════ 7 SURPRISE EVENTS ═══════════════
+    const SURPRISE_EVENTS = [
+      {
+        id: 'health', emoji: '🏥', title: 'Health Inspector Visit',
+        desc: 'The health inspector dropped by unannounced. Well-run shops pass easily; struggling ones face fines.',
+        effect: s => s.rep >= 55
+          ? { rep: +5, money: 0, happy: +3, note: 'Your clean, well-run shop impressed them. Small reputation boost.' }
+          : { rep: -8, money: -90, happy: -5, note: 'They found issues. Fine issued and your reputation took a hit.' }
+      },
+      {
+        id: 'viral', emoji: '📱', title: 'Post Going Viral!',
+        desc: 'A customer shared a stunning photo of their drink. It\'s spreading across local social media.',
+        effect: s => s.happy >= 55
+          ? { rep: +12, money: +110, happy: +5, note: 'Your happy customers amplified it everywhere. Huge boost!' }
+          : { rep: +3, money: +25, happy: +1, note: 'Some attention, but mixed comments. The photo was nice, the vibe less so.' }
+      },
+      {
+        id: 'power', emoji: '⚡', title: 'Power Cut!',
+        desc: 'A brief power outage hits during morning rush. Can your team adapt without any systems?',
+        effect: s => s.rep >= 52
+          ? { rep: -2, money: -35, happy: -2, note: 'Your experienced team handled it with grace. Minimal disruption.' }
+          : { rep: -8, money: -85, happy: -9, note: 'Chaos. Customers left in frustration. Revenue and rep both suffered.' }
+      },
+      {
+        id: 'celeb', emoji: '🌟', title: 'Celebrity Customer!',
+        desc: 'A well-known local personality just walked in and is going to post about their experience.',
+        effect: s => s.happy >= 62
+          ? { rep: +15, money: +130, happy: +8, note: 'They loved it! Mentioned you by name to their thousands of followers.' }
+          : { rep: -4, money: -10, happy: -6, note: 'They were underwhelmed. Their post was... diplomatic at best.' }
+      },
+      {
+        id: 'award', emoji: '🏆', title: 'Local Business Award Nomination!',
+        desc: 'You\'ve been nominated for "Best New Coffee Shop." The community votes based on your reputation.',
+        effect: s => s.rep >= 65
+          ? { rep: +10, money: +160, happy: +10, note: 'You won! A trophy, press coverage, and a wave of new customers.' }
+          : { rep: +3, money: +25, happy: +3, note: 'You didn\'t win, but the nomination gave you a small visibility boost.' }
+      },
+      {
+        id: 'sick', emoji: '🤒', title: 'Key Staff Called In Sick',
+        desc: 'Two of your best staff members are out today. Can you manage with who\'s left?',
+        effect: s => s.money >= 380
+          ? { rep: -3, money: -65, happy: -4, note: 'You hired emergency cover. Costly, but the shop ran reasonably smoothly.' }
+          : { rep: -10, money: -30, happy: -11, note: 'No budget for cover. Understaffed, overwhelmed, and customers felt every minute of it.' }
+      },
+      {
+        id: 'pipe', emoji: '💧', title: 'Burst Pipe Backstage!',
+        desc: 'A pipe burst in the back — minor flooding, but your prep area is disrupted.',
+        effect: s => s.rep >= 50
+          ? { rep: -1, money: -70, happy: -3, note: 'Quick repair sorted it. Customers barely noticed — your team stayed calm.' }
+          : { rep: -6, money: -80, happy: -8, note: 'The disruption showed badly. Slow service and a messy shop frustrated everyone.' }
+      },
+    ];
+
+    // ═══════════════ GAME STATE ═══════════════
+    let state = {};
+    let selectedDiff = null;
+    let dayQueue = [];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // ═══════════════ NAVIGATION ═══════════════
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ═══════════════ DIFFICULTY SELECTION ═══════════════
+    function selectDiff(diff) {
+      selectedDiff = diff;
+      document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('card-' + diff).classList.add('selected');
+      const cfg = DIFF_CONFIG[diff];
+      const box = document.getElementById('diff-desc-box');
+      box.innerHTML = `<h3>${cfg.emoji} ${cfg.name} Mode</h3><p>${cfg.desc}</p>`;
+      box.classList.add('visible');
+      const btn = document.getElementById('start-btn');
+      btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    }
+
+    // ═══════════════ START GAME ═══════════════
+    function startGame() {
+      if (!selectedDiff) return;
+      const cfg = DIFF_CONFIG[selectedDiff];
+      dayQueue = shuffle(ALL_SCENARIOS).slice(0, 15);
+      state = { day: 1, money: cfg.startMoney, rep: cfg.startRep, happy: cfg.startHappy, difficulty: selectedDiff, history: [], lastEffects: null };
+      showScreen('game-screen');
+      const bb = document.getElementById('diff-badge-bar');
+      bb.textContent = cfg.emoji + ' ' + cfg.name;
+      bb.className = 'diff-badge-bar ' + cfg.bbClass;
+      updateStats();
+      renderDecision();
+    }
+
+    // ═══════════════ STATS ═══════════════
+    function clamp(v, mn = 0, mx = 100) { return Math.max(mn, Math.min(mx, v)); }
+
+    function updateStats() {
+      document.getElementById('day-display').textContent = state.day;
+      document.getElementById('stat-money').textContent = '$' + Math.max(0, Math.round(state.money));
+      document.getElementById('stat-rep').textContent = Math.round(state.rep);
+      document.getElementById('stat-happy').textContent = Math.round(state.happy);
+      document.getElementById('bar-money').style.width = clamp((state.money / 1000) * 100) + '%';
+      document.getElementById('bar-rep').style.width = state.rep + '%';
+      document.getElementById('bar-happy').style.width = state.happy + '%';
+      document.getElementById('progress-fill').style.width = ((state.day - 1) / 15 * 100) + '%';
+
+      // Show growth banner for days 1-7
+      const banner = document.getElementById('growth-banner');
+      if (state.day <= 7) {
+        const growthPct = Math.round((getGrowthMult(state.day) - 1) * 100);
+        banner.textContent = `📈 Growth Phase — Day ${state.day}/7 · Revenue boosted +${growthPct}% (${Math.round(getGrowthMult(state.day) * 10) / 10}x multiplier)`;
+        banner.classList.add('visible');
+      } else {
+        banner.classList.remove('visible');
+      }
+    }
+
+    // ═══════════════ RENDER DECISION ═══════════════
+    function renderDecision() {
+      const d = dayQueue[state.day - 1];
+      const cfg = DIFF_CONFIG[state.difficulty];
+      const dm = cfg.costMult;
+      const growthMult = getGrowthMult(state.day);
+      const wildTag = d.wild ? `<span style="background:#8e44ad;color:white;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:6px;">★ WILD</span>` : '';
+      const dmtClass = { easy: 'dmt-easy', medium: 'dmt-medium' }[state.difficulty];
+
+      // Show projected revenue (after growth and rep bonus) as a hint
+      const repBonus = Math.floor(state.rep * cfg.repRevWeight);
+      const happyBonus = Math.floor(state.happy * cfg.happyRevWeight);
+      const growthNote = state.day <= 7
+        ? `<span style="font-size:11px;color:#27ae60;font-weight:700;">📈 +${Math.round((growthMult - 1) * 100)}% growth boost active</span>`
+        : `<span style="font-size:11px;color:#7d6008;font-weight:700;">📊 Growth locked (max reached day 7)</span>`;
+
+      document.getElementById('game-content').innerHTML = `
+    <div class="storyboard shimmer">
+      <div class="panel wide">
+        <div class="panel-header">📰 Day ${state.day} — ${d.wild ? '★ Surprise Scenario' : 'Morning Briefing'}${wildTag}</div>
+        <div class="panel-scene">${d.scene}</div>
+        <div class="panel-caption">"${d.caption}"</div>
+      </div>
+    </div>
+    <div class="decision-section shimmer">
+      <div class="decision-header">
+        <div class="decision-title">📋 ${d.decision}</div>
+        <div class="decision-sub">${d.situation}</div>
+      </div>
+      <div class="decision-body">
+        <p style="margin-bottom:8px;font-size:13px;color:#666;">${d.context}</p>
+        <p style="margin-bottom:15px;font-size:12px;">
+          ${growthNote} &nbsp;·&nbsp;
+          <span style="font-size:11px;color:#2980b9;font-weight:700;">⭐ Rep bonus: +$${repBonus} today</span>
+        </p>
+        <div class="options-grid">
+          <div class="option-card ai-card">
+            <div class="option-card-header">
+              <span class="option-icon">${d.ai.icon}</span>
+              <div style="flex:1;"><div style="font-size:11px;opacity:0.8;font-weight:400;">🤖 AI Option</div><div>${d.ai.label}</div></div>
+              <span class="diff-mod-tag ${dmtClass}">${cfg.name}</span>
+            </div>
+            <div class="option-body">
+              <p class="option-desc">${d.ai.desc}</p>
+              <div class="option-effects">
+                <span class="etag e-neu">💰 Cost: $${Math.round(d.ai.cost * dm)}</span>
+                <span class="etag ${d.ai.rep >= 0 ? 'e-pos' : 'e-neg'}">⭐ Rep: ${d.ai.rep >= 0 ? '+' : ''}${d.ai.rep}</span>
+                <span class="etag ${d.ai.happy >= 0 ? 'e-pos' : 'e-neg'}">😊 Mood: ${d.ai.happy >= 0 ? '+' : ''}${d.ai.happy}</span>
+              </div>
+            </div>
+            <button class="option-btn" onclick="makeChoice('ai')">Choose AI Option →</button>
+          </div>
+          <div class="option-card human-card">
+            <div class="option-card-header">
+              <span class="option-icon">${d.human.icon}</span>
+              <div style="flex:1;"><div style="font-size:11px;opacity:0.8;font-weight:400;">🧑 Human Option</div><div>${d.human.label}</div></div>
+              <span class="diff-mod-tag ${dmtClass}">${cfg.name}</span>
+            </div>
+            <div class="option-body">
+              <p class="option-desc">${d.human.desc}</p>
+              <div class="option-effects">
+                <span class="etag e-neg">💰 Cost: $${Math.round(d.human.cost * dm)}</span>
+                <span class="etag e-pos">⭐ Rep: +${d.human.rep}</span>
+                <span class="etag e-pos">😊 Mood: +${d.human.happy}</span>
+              </div>
+            </div>
+            <button class="option-btn" onclick="makeChoice('human')">Choose Human Option →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+    }
+
+    // ═══════════════ MAKE CHOICE ═══════════════
+    function makeChoice(type) {
+      const d = dayQueue[state.day - 1];
+      const cfg = DIFF_CONFIG[state.difficulty];
+      const ch = type === 'ai' ? d.ai : d.human;
+      const actualCost = Math.round(ch.cost * cfg.costMult);
+
+      // Apply 7% compounding daily growth multiplier (capped at day 7)
+      const growthMult = getGrowthMult(state.day);
+
+      // Base revenue boosted by growth multiplier
+      // rep bonus: $1 per rep point (repRevWeight = 1.0)
+      const baseRevenue = Math.round(ch.revenue * cfg.revMult * growthMult);
+      const repBonus = Math.floor(state.rep * cfg.repRevWeight);   // $1 per rep pt
+      const happyBonus = Math.floor(state.happy * cfg.happyRevWeight);
+      const revenue = baseRevenue + repBonus + happyBonus;
+      const profit = revenue - actualCost - cfg.overhead;
+
+      // On normal/hard, AI negative rep/happy effects are amplified
+      const repDelta = type === 'ai' ? (ch.rep > 0 ? -ch.rep : Math.round(ch.rep * cfg.aiRepMult)) : ch.rep;
+      const happyDelta = type === 'ai' ? (ch.happy > 0 ? -ch.happy : Math.round(ch.happy * cfg.aiRepMult)) : ch.happy;
+
+      state.money = state.money + profit;
+      state.rep = clamp(state.rep + repDelta);
+      state.happy = clamp(state.happy + happyDelta);
+      state.lastEffects = {
+        profit, revenue, cost: actualCost + cfg.overhead,
+        rep: repDelta, happy: happyDelta,
+        growthMult, repBonus
+      };
+      state.history.push({ day: state.day, choice: type, icon: type === 'ai' ? '🤖' : '🧑', label: ch.label });
+
+      let surprise = null;
+      if (Math.random() < cfg.eventChance) {
+        const ev = SURPRISE_EVENTS[Math.floor(Math.random() * SURPRISE_EVENTS.length)];
+        const eff = ev.effect(state);
+        state.money = state.money + eff.money;
+        state.rep = clamp(state.rep + eff.rep);
+        state.happy = clamp(state.happy + eff.happy);
+        surprise = { ev, eff };
+      }
+
+      updateStats();
+      renderResult(d, type, ch, surprise);
+    }
+
+    // ═══════════════ RENDER RESULT ═══════════════
+    function renderResult(d, type, ch, surprise) {
+      const fx = state.lastEffects;
+
+      const growthLabel = fx.growthMult > 1
+        ? `<span class="chip chip-up">📈 ×${fx.growthMult.toFixed(2)} growth</span>`
+        : '';
+      const repBonusLabel = `<span class="chip chip-up">⭐ +$${fx.repBonus} rep bonus</span>`;
+      const profitC = `<span class="chip ${fx.profit >= 0 ? 'chip-up' : 'chip-dn'}">${fx.profit >= 0 ? '+' : ''}$${Math.round(fx.profit)} Profit</span>`;
+      const repC = fx.rep ? `<span class="chip ${fx.rep > 0 ? 'chip-up' : 'chip-dn'}">⭐ ${fx.rep > 0 ? '+' : ''}${fx.rep} Rep</span>` : '';
+      const happyC = fx.happy ? `<span class="chip ${fx.happy > 0 ? 'chip-up' : 'chip-dn'}">😊 ${fx.happy > 0 ? '+' : ''}${fx.happy} Mood</span>` : '';
+
+      let eventHTML = '';
+      if (surprise) {
+        const { ev, eff } = surprise;
+        eventHTML = `
+      <div class="result-panel shimmer">
+        <div class="event-banner">⚡ Random Surprise Event! ⚡</div>
+        <div class="result-header rh-event">${ev.emoji} ${ev.title}</div>
+        <div class="result-body">
+          <div class="result-emoji">${ev.emoji}</div>
+          <div class="result-text">
+            <h3>${ev.title}</h3>
+            <p>${ev.desc}</p>
+            <p style="font-style:italic;color:#7d3c98;margin-bottom:10px;">${eff.note}</p>
+            <div class="chips">
+              ${eff.rep ? `<span class="chip ${eff.rep > 0 ? 'chip-up' : 'chip-dn'}">⭐ ${eff.rep > 0 ? '+' : ''}${eff.rep} Rep</span>` : ''}
+              ${eff.money ? `<span class="chip ${eff.money > 0 ? 'chip-up' : 'chip-dn'}">💰 ${eff.money > 0 ? '+$' : '-$'}${Math.abs(eff.money)}</span>` : ''}
+              ${eff.happy ? `<span class="chip ${eff.happy > 0 ? 'chip-up' : 'chip-dn'}">😊 ${eff.happy > 0 ? '+' : ''}${eff.happy} Mood</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+      }
+
+      const isGameOver = state.money <= 0 || state.rep <= 0 || state.happy <= 0;
+      let alertBar = '';
+      if (state.money <= 0) alertBar = `<div class="bankrupt-bar">💸 You've run out of money! Wrapping up early...</div>`;
+      else if (state.rep <= 0) alertBar = `<div class="bankrupt-bar" style="background:linear-gradient(135deg,#7d3c98,#5d2a7b);color:#fff;">👻 Your reputation has hit zero — nobody knows you exist anymore...</div>`;
+      else if (state.happy <= 0) alertBar = `<div class="bankrupt-bar" style="background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;">😡 Your customers are furious — the anger has reached a boiling point...</div>`;
+
+      document.getElementById('game-content').innerHTML = `
+    <div class="storyboard shimmer">
+      <div class="panel">
+        <div class="panel-header">📺 What Happened</div>
+        <div class="panel-scene">${type === 'human' ? '🧑‍🍳' : '🤖'}</div>
+        <div class="panel-caption">You chose: "${ch.label}"</div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">📊 Day ${state.day} Finances</div>
+        <div class="panel-body">
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--cream);border-radius:8px;">
+              <span style="font-size:13px;color:#666;">💰 Revenue</span><span style="font-weight:700;color:var(--mint);">+$${Math.round(fx.revenue)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--cream);border-radius:8px;">
+              <span style="font-size:13px;color:#666;">📤 Total Costs</span><span style="font-weight:700;color:var(--red);">-$${Math.round(fx.cost)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 10px;background:${fx.profit >= 0 ? '#d4edda' : '#f8d7da'};border-radius:8px;border:1px solid ${fx.profit >= 0 ? '#b1dfbb' : '#f5c6cb'};">
+              <span style="font-size:13px;font-weight:700;">Net Profit</span>
+              <span style="font-weight:700;color:${fx.profit >= 0 ? '#155724' : '#721c24'};">${fx.profit >= 0 ? '+' : ''}$${Math.round(fx.profit)}</span>
+            </div>
+          </div>
+          <div class="chips" style="margin-top:12px;">${profitC}${repC}${happyC}${growthLabel}${repBonusLabel}</div>
+        </div>
+      </div>
+    </div>
+    ${eventHTML}
+    <div class="lesson-box shimmer">
+      <span class="lesson-icon">💡</span>
+      <div class="lesson-text"><strong>Today's Lesson</strong>${d.lesson}</div>
+    </div>
+    ${alertBar}
+    <div style="text-align:right;">
+      <button class="btn btn-primary" onclick="nextDay()">${state.day >= 15 || isGameOver ? 'See Final Results 🏆' : 'Next Day →'}</button>
+    </div>
+  `;
+    }
+
+    // ═══════════════ NEXT DAY ═══════════════
+    function nextDay() {
+      if (state.day >= 15 || state.money <= 0 || state.rep <= 0 || state.happy <= 0) { showEndScreen(); return; }
+      state.day++;
+      updateStats();
+      renderDecision();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ═══════════════ END SCREEN ═══════════════
+    function showEndScreen() {
+      const aiCount = state.history.filter(h => h.choice === 'ai').length;
+      const humanCount = state.history.filter(h => h.choice === 'human').length;
+      const cfg = DIFF_CONFIG[state.difficulty];
+      const diffBonus = { easy: 0, medium: 8 }[state.difficulty];
+      const score = Math.round((state.rep * 0.33) + (state.happy * 0.33) + (Math.min(Math.max(state.money, 0), 1200) / 1200 * 28) + diffBonus);
+
+      let emoji, resultTitle, msg;
+      if (state.money <= 0) {
+        emoji = '💸'; resultTitle = 'Bankrupt!';
+        msg = 'You ran out of money. Over-relying on expensive choices without building sufficient revenue is unsustainable — balance is key.';
+      } else if (state.rep <= 0) {
+        emoji = '👻'; resultTitle = 'No Customers!';
+        msg = 'Your reputation hit rock bottom — word spread, and nobody came through your door. In the coffee world, trust is everything. Once your name is mud, even the best latte won\'t bring people back.';
+      } else if (state.happy <= 0) {
+        emoji = '😡'; resultTitle = 'Angry Customers!';
+        msg = 'Customer happiness bottomed out completely. Your regulars turned into critics, leaving scathing reviews and driving newcomers away. A coffee shop runs on smiles — yours ran out.';
+      } else if (score >= 78) {
+        emoji = '🏆'; resultTitle = 'Coffee Legend!';
+        msg = 'You mastered the balance. Your shop thrived because you knew when to invest in people and when technology genuinely helped.';
+      } else if (score >= 62) {
+        emoji = '⭐'; resultTitle = 'Skilled Manager!';
+        msg = 'Good instincts. You built a solid business — there\'s room to better blend AI efficiency with human warmth.';
+      } else if (score >= 46) {
+        emoji = '☕'; resultTitle = 'Getting There';
+        msg = 'Your shop survived but didn\'t flourish. Where could a human touch have made the biggest difference?';
+      } else {
+        emoji = '😓'; resultTitle = 'Rough 15 Days';
+        msg = 'Your shop struggled. Too much AI automation hurt your reputation, or costs ran too high. Neither extreme works alone.';
+      }
+
+      const histHTML = state.history.map(h =>
+        `<div class="hcell"><div class="hcell-day">Day ${h.day}</div><div class="hcell-icon">${h.icon}</div><div class="hcell-type" style="color:${h.choice === 'human' ? 'var(--mint)' : '#2980b9'}">${h.choice === 'human' ? 'Human' : 'AI'}</div></div>`
+      ).join('');
+
+      const lessonsHTML = [
+        humanCount >= 10 ? '✅ You prioritised people — your shop had character and warmth that customers genuinely felt.' : '⚠️ More human choices could have built stronger customer loyalty over the 15 days.',
+        aiCount >= 6 ? '⚠️ Heavy AI use cut costs short-term, but watch for reputation erosion over time.' : '✅ You used AI selectively — smart tool usage without over-relying on it.',
+        state.rep >= 65 ? '✅ High reputation means customers trust and recommend you — and each point added $1 to daily revenue!' : '📉 Low reputation cost you customers and revenue. Invest more in quality and human experience.',
+        state.happy >= 65 ? '✅ Happy customers spend more and come back — you created loyal fans, not just visitors.' : '📉 Customer happiness was low. More personal touches would have changed this significantly.',
+        state.money >= 400 ? '✅ Strong financial position — you managed costs well relative to your difficulty.' : '💸 Thin margins. Better reputation and happiness drive more revenue without extra spend.',
+      ].map(l => `<li><span>${l}</span></li>`).join('');
+
+      document.getElementById('end-screen').innerHTML = `
+    <div class="end-card shimmer">
+      <div class="end-header">
+        <span class="end-emoji">${emoji}</span>
+        <div class="badge" style="margin-bottom:12px;">${state.day >= 15 && state.money > 0 && state.rep > 0 && state.happy > 0 ? "15 Days Complete" : "Game Over · Day " + state.day} · ${cfg.emoji} ${cfg.name}</div>
+        <div class="end-title">${resultTitle}</div>
+        <div class="end-score">${score}</div>
+      </div>
+      <div class="end-body">
+        <p style="color:#555;font-size:15px;line-height:1.7;margin-bottom:22px;text-align:center;">${msg}</p>
+        <div class="end-stats-grid">
+          <div class="end-stat-box"><div class="end-stat-label">💰 Final Balance</div><div class="end-stat-val" style="color:${state.money > 0 ? 'var(--mint)' : 'var(--red)'};">$${Math.max(0, Math.round(state.money))}</div></div>
+          <div class="end-stat-box"><div class="end-stat-label">⭐ Reputation</div><div class="end-stat-val">${Math.round(state.rep)}/100</div></div>
+          <div class="end-stat-box"><div class="end-stat-label">😊 Happiness</div><div class="end-stat-val">${Math.round(state.happy)}/100</div></div>
+          <div class="end-stat-box"><div class="end-stat-label">🤖 AI Choices</div><div class="end-stat-val">${aiCount}</div></div>
+          <div class="end-stat-box"><div class="end-stat-label">🧑 Human Choices</div><div class="end-stat-val">${humanCount}</div></div>
+          <div class="end-stat-box"><div class="end-stat-label">🎯 Overall Score</div><div class="end-stat-val" style="color:var(--caramel);">${score}/100</div></div>
+        </div>
+        <div style="margin-bottom:8px;font-weight:600;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--roast);">Your 15-Day Journey</div>
+        <div class="history-grid">${histHTML}</div>
+        <div class="lessons-summary">
+          <h3>💡 What You Learned</h3>
+          <ul>${lessonsHTML}</ul>
+        </div>
+        <div style="text-align:center;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="showScreen('diff-screen')">☕ Play Again</button>
+          <button class="btn btn-ghost" onclick="showScreen('title-screen')" style="color:var(--espresso);border-color:var(--roast);">← Main Menu</button>
+        </div>
+      </div>
+    </div>`;
+      showScreen('end-screen');
+    }
+  </script>
+</body>
+
+</html>
